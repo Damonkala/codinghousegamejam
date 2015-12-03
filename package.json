@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Damonkala/codinghousegamejam/issues"
   },
-  "homepage": "https://github.com/Damonkala/codinghousegamejam#readme"
+  "homepage": "https://github.com/Damonkala/codinghousegamejam#readme",
+  "dependencies": {
+    "express": "^4.13.3"
+  }
 }
