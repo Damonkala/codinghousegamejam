@@ -20,7 +20,7 @@ var currentSpeed = 0
 // var cursors
 
 function create () {
-  socket = io.connect('http://localhost:3000')
+  socket = io.connect('https://murmuring-peak-1574.herokuapp.com/')
 
   // Resize our game world to be a 2000 x 2000 square
   game.world.setBounds(-500, -500, 1000, 1000)
