@@ -19,7 +19,9 @@ var Player = require('./lib/Player.js')
 
 //SOCKETS
 var players = [];
+var bombs = [];
 var messages = [];
+
 io.on('connection', function(client){
     // Listen for client disconnected
   onSocketConnection()
@@ -30,6 +32,9 @@ io.on('connection', function(client){
 
   // Listen for move player message
   client.on('move player', onMovePlayer)
+
+  client.on('bomb placed', onBombPlaced)
+
   console.log('socket connected')
   client.emit('message', {messages: messages})
   client.on('sending', function(data){
@@ -114,6 +119,22 @@ function onNewPlayer (data) {
   // Add new player to the players array
   players.push(newPlayer)
 }
+function onBombPlaced (data) {
+
+
+  var newBomb = new Bomb(data.x, data.y)
+  newBomb.id = this.id
+
+  this.broadcast.emit('bomb placed', {id: newBomb.id, x: newBomb.getX(), y: newBomb.getY()})
+
+  var i, existingPlayer
+  for (i = 0; i < players.length; i++) {
+    existingPlayer = players[i]
+    this.emit('bomb placed', {id: existingPlayer.id, x: existingPlayer.getX(), y: existingPlayer.getY()})
+  }
+
+bombs.push(newBomb)
+}
 
 // Player has moved
 function onMovePlayer (data) {
@@ -134,10 +155,7 @@ function onMovePlayer (data) {
   this.broadcast.emit('move player', {id: movePlayer.id, x: movePlayer.getX(), y: movePlayer.getY()})
 }
 
-/* ************************************************
-** GAME HELPER FUNCTIONS
-************************************************ */
-// Find player by ID
+
 function playerById (id) {
   var i
   for (i = 0; i < players.length; i++) {
@@ -150,6 +168,48 @@ function playerById (id) {
 }
 
 var Player = function (startX, startY) {
+  var x = startX
+  var y = startY
+  var id
+
+  // Getters and setters
+  var getX = function () {
+    return x
+  }
+
+  var getY = function () {
+    return y
+  }
+
+  var setX = function (newX) {
+    x = newX
+  }
+
+  var setY = function (newY) {
+    y = newY
+  }
+
+  // Define which variables and methods can be accessed
+  return {
+    getX: getX,
+    getY: getY,
+    setX: setX,
+    setY: setY,
+    id: id
+  }
+}
+function bombById (id) {
+  var i
+  for (i = 0; i < bombs.length; i++) {
+    if (bombs[i].id === id) {
+      return bombs[i]
+    }
+  }
+
+  return false
+}
+
+var Bomb = function (startX, startY) {
   var x = startX
   var y = startY
   var id

@@ -5,6 +5,7 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create
 function preload () {
   game.load.image('earth', 'assets/light_sand.png')
   game.load.image('dude', 'assets/character.png', 64, 64)
+  game.load.image('bomb', 'assets/bomb.png', 64, 64)
 }
 
 var socket // Socket connection
@@ -12,12 +13,13 @@ var socket // Socket connection
 var land
 
 var player
-
+var bombs
 var enemies
 
 var currentSpeed = 0
 
-// var cursors
+var cursors
+var bombKey
 
 function create () {
   socket = io.connect('http://localhost:3000')
@@ -53,7 +55,7 @@ function create () {
 
   // Create some baddies to waste :)
   enemies = []
-
+  bombs = [];
   player.bringToTop()
 
   game.camera.follow(player)
@@ -61,7 +63,8 @@ function create () {
   game.camera.focusOnXY(0, 0)
 
   cursors = game.input.keyboard.createCursorKeys()
-
+  bombKey = game.input.keyboard.addKey(Phaser.Keyboard.Z);
+  bombKey.onDown.add(addBomb, this);
   // Start listening for events
   setEventHandlers()
 }
@@ -75,6 +78,8 @@ var setEventHandlers = function () {
 
   // New player message received
   socket.on('new player', onNewPlayer)
+
+  socket.on('bomb placed', onBombPlaced)
 
   // Player move message received
   socket.on('move player', onMovePlayer)
@@ -102,6 +107,11 @@ function onNewPlayer (data) {
 
   // Add new player to the remote players array
   enemies.push(new RemotePlayer(data.id, game, player, data.x, data.y))
+}
+function onBombPlaced (data) {
+  console.log('bomb placed:', data.id)
+  // Add new player to the remote players array
+  bombs.push(new RemoteBomb(data.id, game, bomb, data.x, data.y))
 }
 
 // Move player
@@ -136,8 +146,9 @@ function onRemovePlayer (data) {
 }
 
 function update () {
-
   socket.emit('move player', { x: player.x, y: player.y })
+
+
   for (var i = 0; i < enemies.length; i++) {
     if (enemies[i].alive) {
       enemies[i].update()
@@ -162,13 +173,8 @@ function update () {
   land.tilePosition.x = -game.camera.x
   land.tilePosition.y = -game.camera.y
 
-  // if (game.input.activePointer.isDown) {
-  //   if (game.physics.distanceToPointer(player) >= 10) {
-  //     currentSpeed = 300
-  //
-  //     player.rotation = game.physics.angleToPointer(player)
-  //   }
-  // }
+
+
 
 }
 
@@ -185,4 +191,18 @@ function playerById (id) {
   }
 
   return false
+}
+function bombById (id) {
+  for (var i = 0; i < bombs.length; i++) {
+    if (bombs[i].bomb.name === id) {
+      return bombs[i]
+    }
+  }
+
+  return false
+}
+function addBomb () {
+    bomb = game.add.sprite(player.x, player.y, 'bomb');
+    socket.emit('bomb placed', { x: bomb.x, y: bomb.y })
+    // bombs.push(new Bomb(data.id, game, bomb, data.x, data.y))
 }
